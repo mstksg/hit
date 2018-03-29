@@ -48,13 +48,14 @@ import qualified Data.ByteString.Lazy as L
 
 import Data.Git.Ref
 import Data.Git.Delta
-import Data.Git.Imports
+import Data.Git.Imports hiding ((<>))
 import Data.Hourglass (Elapsed, TimezoneOffset(..)
                       , timePrint, timeConvert
                       , Time(..), Timeable(..)
                       , LocalTime, localTimeSetTimezone, localTimeFromGlobal)
 import Data.Data
 import qualified Data.ByteString.UTF8 as UTF8
+import Data.Semigroup
 
 -- | type of a git object.
 data ObjectType =
@@ -185,10 +186,13 @@ data Person = Person
 -- | Represent a root tree with zero to many tree entries.
 data Tree = Tree { treeGetEnts :: [TreeEnt] } deriving (Show,Eq)
 
+instance Semigroup Tree where
+    Tree e1 <> Tree e2 = Tree (e1 ++ e2)
+
 instance Monoid Tree where
-    mempty                      = Tree []
-    mappend (Tree e1) (Tree e2) = Tree (e1 ++ e2)
-    mconcat trees               = Tree $ concatMap treeGetEnts trees
+    mempty        = Tree []
+    mappend       = (<>)
+    mconcat trees = Tree $ concatMap treeGetEnts trees
 
 -- | Represent a binary blob.
 data Blob = Blob { blobGetContent :: L.ByteString } deriving (Show,Eq)
